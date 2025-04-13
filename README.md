@@ -4,6 +4,7 @@
 
 K8S+JENKINS实现CICD流水线
 核心流程：
+
 1.GitHub 代码拉取 → Maven 编译打包 → Docker 镜像构建 → Harbor 镜像存储。
 
 2.完全基于 Kubernetes 动态 Pod 调度，按需创建临时构建节点，资源高效利用。
@@ -187,23 +188,23 @@ kubectl apply -f maven-pvpvc.yaml
 
 ## 问题
 
-1.k8s环境下的jenkins没有全局配置maven
+1.k8s环境下的jenkins没有全局配置maven；
+
 (1)构建自定义镜像，但是会产生一个很大的镜像
+
 (2)jenkins连接k8s，定义一个pod模板，启动一个临时的节点，容器中运行了maven，在流水线运行时添加上这个标签，即可在进行流水线时使用临时pod中的maven来进行构建打包
 
-2.关闭了harbor的https，但是很容易出现TLS超时的情况。比如在jenkins连接k8s，启动pod时，该pod默认使用https，会导致连接出错
+2.关闭了harbor的https，但是很容易出现TLS超时的情况。比如在jenkins连接k8s，启动pod时，该pod默认使用https，会导致连接出错；
 
 3.harbor的认证问题，集群之中，对各个节点配置相应的证书；
+临时pod也会存在身份验证以及证书问题：所以在pod模板中使用了secret资源harbor-ca-secret和harbor-sec
 
-现在想要把生成的jar包构建成镜像，这里使用的方法是使用pod模板拉取临时节点来进行docker构建，但是该临时的容器和harbor仓库交互时，发生了身份验证问题以及https证书问题，所以在pod模板中使用了secret资源harbor-ca-secret和harbor-sec，其中harbor-ca-secret资源使用的是ca.crt和和harbor.crt生成的
->kubectl create secret generic harbor-ca-secret \
-  --from-file=harbor.crt=/usr/local/SSL/harbor.crt \
-  --from-file=ca.crt=/usr/local/SSL/ca.crt
 
-4.我的pod模板中，启动了maven容器进行了maven构建jar包，并且向进一步使用docker容器进行镜像构建，但是可能是因为资源不足，在docker构建阶段占据的资源过多，导致整一个临时的pod被删除;
-现在将同一个pod模板中的maven和docke分开，使用新的pod模板来进行docker构建
+4.在同一pod模板中同时进行maven编译打包和docker镜像构建，但是会因为集群中资源不足，导致maven和docker容器被驱逐；
+将二者分为不同的pod模板解决了问题
 
-5.每次在进行mvn打包构建的时候，总是会因为依赖下载很久；现在使用maven本地化存储来解决每次都要下载全部依赖的问题，将依赖都挂载到/root/k8s-maven中
+5.每次在进行mvn打包构建的时候，总是会因为依赖下载很久；
+现在使用maven本地化存储来解决每次都要下载全部依赖的问题，将依赖都挂载到/root/k8s-maven中
 
-6.启动了新的pod模板，docker-build来构建镜像，但是无法获取到jar包；现在jar包存储在jenkins容器和k8s-nfs中
+6.启动了新的pod模板，docker-build来构建镜像，但是无法获取到jar包；现在jar包存储在jenkins容器和k8s-nfs中；
 现在通过stash/unstash来传递文件（在流水线中使用），这是一种跨pod传递文件的机制
