@@ -10,6 +10,34 @@ K8S+JENKINS实现CICD流水线
 
 3.Maven依赖本地化存储加速构建。
 
+## 流程说明
+
+1.开发人员需求确定后，从master分支拉取最新代码，在dev分支完成开发后，将dev分支合并到test分支并推送至git仓库。
+
+2.Jenkins采用SCM轮询方式，检测GIT仓库，触发持续构建流程
+
+3.Jenkins调用k8s插件，调用临时Pod进行编译打包和docker镜像构建
+
+4.将镜像产物推送到Harbor镜像仓库
+
+## 项目代码仓库地址
+
+GITHUB：https://github.com/xljmzhc/Jenkins
+
+## POD模板，临时POD介绍
+
+在 Jenkins 的 Kubernetes 动态 Agent 模式下，Pod 模板是定义临时构建环境的核心配置。通过声明式模板，Jenkins 能在每次构建时动态创建专用 Pod，任务完成后自动销毁，实现高效资源利用和环境隔离。
+
+✅ 资源高效
+按需创建/销毁 Pod，避免静态 Agent 的常驻资源浪费
+
+✅ 安全可靠
+容器化隔离，构建失败不影响其他任务
+通过 Kubernetes Secret 管理敏感信息（如 Harbor 凭据）
+
+✅ 灵活扩展
+一个模板可复用于多个项目，仅需调整标签即可切换环境
+
 ## yaml应用部署文件
 
 1.jenkins-rbac.yaml: Jenkins服务账户的PBAC配置
