@@ -111,6 +111,9 @@ sudo update-ca-trust extract
 创建项目，配置用户权限，为项目添加对应用户
 ![图片描述](https://github.com/xljmzhc/k8s-jenkins/blob/master/images/image.png)
 
+4.harbor准备好各种镜像
+![图片描述](https://github.com/xljmzhc/k8s-jenkins/blob/master/images/image-5.png)
+
 ## 部署流程
 
 1.启动harbor仓库
