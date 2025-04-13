@@ -1,0 +1,82 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    jenkins: slave
+    jenkins/label: maven
+spec:
+  containers:
+    # 1. jnlp 容器
+    - name: jnlp
+      image: 192.168.137.137/cicd/agent:latest
+      args:
+        - -url
+        - http://jenkins.cicd.svc.cluster.local:8080
+        - -secret
+        - e30a57f3042b6384c2d16d44d136c0634aacf2692123b16cb172aa29be8bad46
+        - -name
+        - maven-agent-01
+      env:
+        - name: JENKINS_PROTOCOLS
+          value: JNLP4-connect
+        - name: JENKINS_DIRECT_CONNECTION
+          value: 192.168.137.138:30500
+        - name: JENKINS_AGENT_WORKDIR
+          value: /home/jenkins/agent
+        - name: REMOTING_OPTS
+          value: -noReconnectAfter 1d
+      command: ['sh', '-c', 'sleep infinity & /usr/local/bin/jenkins-agent']  # 保持容器运行
+      volumeMounts:
+        - name: workspace-volume
+          mountPath: /home/jenkins/agent
+
+      resources:
+        requests:
+          cpu: "100m"
+          memory: "128Mi"  # 增加内存请求
+          ephemeral-storage: "100Mi"
+
+    # 2. Maven 构建容器
+    - name: maven
+      image: 192.168.137.137/cicd/maven:latest
+      command: ['tail', '-f', '/dev/null']
+      tty: true
+
+      volumeMounts:
+        - name: maven-repo
+          mountPath: /root/.m2/repository
+        - name: workspace-volume
+          mountPath: /home/jenkins/agent
+
+   
+  volumes:
+    - name: workspace-volume
+      emptyDir: {}
+
+    - name: maven-repo # maven本地化存储
+      persistentVolumeClaim:
+        claimName: maven-repo-pvc
+
+    - name: docker-config # harbor账户密码
+      secret: 
+        secretName: harbor-sec
+        items: 
+          - key:  .dockerconfigjson
+            path: config.json
+    - name: harbor-certs # 应用harborhttps验证资源
+      secret: 
+        secretName: harbor-ca-secret
+        items: 
+          - key: harbor.crt
+            path: harbor.crt
+          - key: ca.crt
+            path: ca.crt
+    - name: docker-buildx-cache  #docker build之后需要可写的目录
+      emptyDir: {}
+       
+  restartPolicy: Never
+  imagePullSecrets:
+    - name: harbor-sec
+  nodeSelector:
+    kubernetes.io/os: linux
+

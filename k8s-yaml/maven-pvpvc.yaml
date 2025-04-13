@@ -1,0 +1,28 @@
+# maven-pv.yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: maven-repo-pv
+spec:
+  storageClassName: nfs-client
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  nfs:
+    server: 192.168.137.138  # 你的NFS服务器IP
+    path: "/root/k8s-maven"  # NFS上的持久化路径
+---
+# maven-pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: maven-repo-pvc
+  namespace: cicd
+spec:
+  storageClassName: nfs-client
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi

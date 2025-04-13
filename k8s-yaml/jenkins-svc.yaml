@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: jenkins
+  namespace: cicd
+spec:
+  type: NodePort  # 关键修改
+  selector:
+    app: jenkins
+  ports:
+    - port: 8080
+      targetPort: web
+      name: web
+      nodePort: 30080  # 可选：手动指定端口（范围30000-32767）
+    - port: 50000
+      targetPort: slave
+      name: slave
+      nodePort: 30500  # 可选

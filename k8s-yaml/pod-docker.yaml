@@ -1,0 +1,93 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    jenkins: slave
+    jenkins/label: docker-build  # 专门用于Docker操作
+spec:
+  containers:
+    # 1. jnlp 容器
+    - name: jnlp
+      image: 192.168.137.137/cicd/agent:latest
+      args:
+        - -url
+        - http://jenkins.cicd.svc.cluster.local:8080
+        - -secret
+        - e30a57f3042b6384c2d16d44d136c0634aacf2692123b16cb172aa29be8bad46
+        - -name
+        - maven-agent-01
+      env:
+        - name: JENKINS_PROTOCOLS
+          value: JNLP4-connect
+        - name: JENKINS_DIRECT_CONNECTION
+          value: 192.168.137.138:30500
+        - name: JENKINS_AGENT_WORKDIR
+          value: /home/jenkins/agent
+        - name: REMOTING_OPTS
+          value: -noReconnectAfter 1d
+      command: ['sh', '-c', 'sleep infinity & /usr/local/bin/jenkins-agent']
+      volumeMounts:
+        - name: workspace-volume
+          mountPath: /home/jenkins/agent
+      resources:
+        requests:
+          ephemeral-storage: "100Mi"
+        limits:
+          ephemeral-storage: "512Mi"
+
+    # 2. Docker 专用容器
+    - name: docker
+      image: 192.168.137.137/cicd/docker-dine:latest
+      securityContext:
+        privileged: true
+      command: ['cat']
+      tty: true
+      volumeMounts:
+        - name: workspace-volume
+          mountPath: /home/jenkins/agent
+
+        - name: docker-sock
+          mountPath: /var/run/docker.sock
+
+        - name: docker-config
+          mountPath: /root/.docker
+
+        - name: harbor-certs
+          mountPath: /etc/docker/certs.d/192.168.137.137
+          readOnly: true
+
+        - name: docker-buildx-cache
+          mountPath: /root/.docker/buildx
+      resources:
+        requests:
+          ephemeral-storage: "200Mi"
+        limits:
+          ephemeral-storage: "1Gi"
+
+  volumes:
+    - name: workspace-volume
+      emptyDir: {}
+
+    - name: docker-sock
+      hostPath:
+        path: /var/run/docker.sock
+
+    - name: docker-config
+      secret:
+        secretName: harbor-sec
+        items:
+          - key: .dockerconfigjson
+            path: config.json
+
+    - name: harbor-certs
+      secret:
+        secretName: harbor-ca-secret
+        items:
+          - key: harbor.crt
+            path: harbor.crt
+          - key: ca.crt
+            path: ca.crt
+
+    - name: docker-buildx-cache
+      emptyDir: {}
+

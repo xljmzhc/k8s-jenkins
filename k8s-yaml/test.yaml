@@ -1,0 +1,18 @@
+# test-maven-pv-pvc.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-maven-storage
+  namespace: cicd
+spec:
+  containers:
+  - name: tester
+    image: alpine:3.14  # 轻量级测试镜像
+    command: ["sh", "-c", "tail -f /dev/null"]  # 保持容器运行
+    volumeMounts:
+    - name: maven-repo
+      mountPath: /mnt/maven-repo  # 容器内挂载点
+  volumes:
+  - name: maven-repo
+    persistentVolumeClaim:
+      claimName: maven-repo-pvc  # 使用您创建的PVC
