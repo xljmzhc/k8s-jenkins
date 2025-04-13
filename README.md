@@ -5,7 +5,9 @@
 K8S+JENKINS实现CICD流水线
 核心流程：
 1.GitHub 代码拉取 → Maven 编译打包 → Docker 镜像构建 → Harbor 镜像存储。
+
 2.完全基于 Kubernetes 动态 Pod 调度，按需创建临时构建节点，资源高效利用。
+
 3.Maven依赖本地化存储加速构建。
 
 ## yaml应用部署文件
@@ -121,10 +123,15 @@ sudo update-ca-trust extract
 
 2.应用部署文件
 >kubectl apply -f jenkins-pv.yaml
+
 kubectl apply -f jenkins-pvc.yaml
+
 kubectl apply -f jenkins-rbac.yaml
+
 kubectl apply -f jenkins-deployment.yaml
+
 kubectl apply -f jenkins-svc.yaml
+
 kubectl apply -f maven-pvpvc.yaml
 
 - Harbor仓库密码
