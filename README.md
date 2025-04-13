@@ -109,7 +109,7 @@ sudo update-ca-trust extract
 - harbor用户，仓库配置
 
 创建项目，配置用户权限，为项目添加对应用户
-![alt text](image.png)
+![图片描述](https://github.com/xljmzhc/k8s-jenkins/blob/master/images/image.png)
 
 ## 部署流程
 
@@ -135,16 +135,17 @@ kubectl apply -f maven-pvpvc.yaml
 3.根据svc暴露的端口访问Jenkins界面，并且进行必要插件的安装
 
 4.配置凭据
-![alt text](image-1.png)
+![图片描述](https://github.com/xljmzhc/k8s-jenkins/blob/master/images/image-1.png)
 
 5.增加云节点k8s，在云节点中增加pod模板docker-build和maven
-![alt text](image-2.png)
+![图片描述](https://github.com/xljmzhc/k8s-jenkins/blob/master/images/image-2.png)
 
 6.新建项目，编写流水线
 
 ## 构建结果
 
-
+![图片描述](https://github.com/xljmzhc/k8s-jenkins/blob/master/images/image-3.png)
+![图片描述](https://github.com/xljmzhc/k8s-jenkins/blob/master/images/image-4.png)
 
 ## 问题
 
